@@ -1,258 +1,137 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    //public or private identify
-    //data type (int, floats, bool, strings)
-    //every variable has a NAME
-    //option value assigned
-
-    public bool CanTripleShot = false;
-    public bool Isspeedboost = false;
-    public bool ShieldisActive = false;
-    public int lives = 3;
-    private int hitcount = 0;
-    
+    private CharacterController _controller;
 
     [SerializeField]
-    private GameObject PlayerExplosionprefab;
+    private AudioSource _weaponaudio;
     [SerializeField]
-    private GameObject tripleshotprefab;
+    AudioSource _backgorundsource;
     [SerializeField]
-    private GameObject laserprefab;
-    [SerializeField]
-    private GameObject shieldprefab;
-    [SerializeField]
-    private GameObject[] motors;
+    AudioSource _ambientsource;
+   
 
     [SerializeField]
-    private float firerate = 0.25f;
-    private float canfire = 0f;
+    private int _currentAmmo;
+    [SerializeField]
+    private int maxAmmo = 100;
+
+    private bool _isReloading = false;
+
+    public bool _hasCoin = false;
 
     [SerializeField]
-    private float speed = 6f;
+    private float _speed = 3.5f;
+    [SerializeField]
+    private float _gravity = 9.18f;
 
-    private UIManager uimanager;
-    private GameManager gamemanager;
-    private Spawn_Manager spawnmanager;
-    private AudioSource audiosource;
+    [SerializeField]
+    private GameObject _MuzzleFlashPrefab;
+    [SerializeField]
+    private GameObject _HitMarker;
+    [SerializeField]
+    private GameObject _weapon;
 
+    private UI_Manager _uiManager;
 
-    Rigidbody2D rb;
-    Animator animator;
-    Vector2 move;
-
-
+    // Start is called before the first frame update
     void Start()
     {
-        // current position = new position
-        transform.position = new Vector3(0, 0, 0);
+        _controller = GetComponent<CharacterController>();
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
 
-        uimanager = GameObject.Find("Canvas").GetComponent<UIManager>();
-                   
-        if (uimanager != null)
+        _backgorundsource.Play();
+        _ambientsource.Play();
 
-        {
-            uimanager.Updatelives(lives);
-        }
+        _currentAmmo = maxAmmo;
 
-        gamemanager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        _uiManager = GameObject.Find("Canvas").GetComponent<UI_Manager>();
 
-
-        spawnmanager = GameObject.Find("SpawnManager").GetComponent<Spawn_Manager>();
-
-        audiosource = GetComponent<AudioSource>();
-
-        hitcount = 0;
-
-        rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        
     }
 
-
+    // Update is called once per frame
     void Update()
     {
         
 
+        if (Input.GetMouseButton(0) && _currentAmmo > 0)
+        {
+            Shoot();
+        }
 
+        else
+        {
+            _MuzzleFlashPrefab.SetActive(false);
+            _weaponaudio.Stop();
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            _isReloading = true;
+            StartCoroutine(Reload());
+        }
+
+        MovePlayer();
     }
 
-    public void damage()
+    void Shoot()
     {
+        _currentAmmo--;
 
-      
+        _MuzzleFlashPrefab.SetActive(true);
 
-        if (ShieldisActive == true)
+        _uiManager.updateAmmo(_currentAmmo);
 
+        if (_weaponaudio.isPlaying == false)
         {
-            ShieldisActive = false;
-            shieldprefab.SetActive(false);
-            return;
+            _weaponaudio.Play();
         }
 
-        hitcount++;
+        Ray rayorigin = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        RaycastHit Hitinfo;
 
-        if (hitcount == 1)
-
-        {
-            motors[0].SetActive(true);
-        }
-
-        else if (hitcount == 2)
+        if (Physics.Raycast(rayorigin, out Hitinfo))
 
         {
-            motors[1].SetActive(true);
-        }
-
-        //subtrai 1 vida do player (caso fosse para adicionar seria lives++;)
-        lives--;
-
-        uimanager.Updatelives(lives);
-
-        if (lives < 1)
-        {
-            Destroy(this.gameObject);
-            Instantiate(PlayerExplosionprefab, transform.position, Quaternion.identity);
-            gamemanager.gameOver = true;
-            uimanager.ShowMenuScreen();
-            spawnmanager.StopAllCoroutines();
-            
+            Debug.Log("Hit: " + Hitinfo.transform.name);
+            GameObject Hitamarker = Instantiate(_HitMarker, Hitinfo.point, Quaternion.LookRotation(Hitinfo.normal));
+            Destroy(Hitamarker, 0.000001f);
         }
 
     }
-       
 
-    public void Shoot()
+
+    void MovePlayer()
     {
-        
+        float HorizontalInput = Input.GetAxis("Horizontal");
+        float VerticalInput = Input.GetAxis("Vertical");
+        Vector3 _direction = new Vector3(HorizontalInput, 0, VerticalInput);
+        Vector3 _velocity = _direction * _speed;
+        _velocity.y -= _gravity;
 
-        if (Time.time > canfire)
-        {
-            audiosource.Play();
-
-            if (CanTripleShot == true)
-            {
-                Instantiate(tripleshotprefab, transform.position, Quaternion.identity);
-            }
-
-            else if (CanTripleShot == false)
-            {
-
-                Instantiate(laserprefab, transform.position + new Vector3(0, 0.9f, 0), Quaternion.identity);
-            }
-
-
-            canfire = Time.time + firerate;
-
-        }
-
-
-
+        _velocity = transform.transform.TransformDirection(_velocity);
+        _controller.Move(_velocity * Time.deltaTime);
     }
 
-
-    private void FixedUpdate()
-    {
-        Vector3 direction = new Vector3(move.x, move.y, 0);
-        rb.MovePosition(rb.position * direction * speed * Time.deltaTime);
-    }
-
-    public void movement(InputAction.CallbackContext value)
+    IEnumerator Reload()
 
     {
-        move = value.ReadValue<Vector2>();
+        yield return new WaitForSeconds(1.5f);
+        _currentAmmo = maxAmmo;
+        _isReloading = false;
+        _uiManager.updateAmmo(_currentAmmo);
 
-        //movimentação do personagem e limitação de tela
-
-        if (transform.position.y > 4.5f)
-        {
-            transform.position = new Vector3(transform.position.x, 4.5f, 0);
-
-        }
-        else if (transform.position.y < -4.5f)
-        {
-            transform.position = new Vector3(transform.position.x, -4.5f, 0);
-
-        }
-
-        else if (transform.position.y > 4.5f)
-
-        {
-            transform.position = new Vector3(transform.position.x, 4.5f, 0);
-
-        }
-
-        //
-
-        if (transform.position.x > 9.5f)
-        {
-            transform.position = new Vector3(-9.5f, transform.position.y, 0);
-
-        }
-        else if (transform.position.x < -9.5f)
-        {
-            transform.position = new Vector3(9.5f, transform.position.y, 0);
-
-        }
-
-        else if (transform.position.x > 9.5f)
-
-        {
-            transform.position = new Vector3(-9.5f, transform.position.y, 0);
-
-        }
-       
     }
 
-    public void TripleShotPowerupOn()
+   public void buyWeapon()
     {
-        CanTripleShot = true;
-        StartCoroutine(TripleShotPowerDownRoutine());
-
+        _weapon.SetActive(true);
     }
 
-    public IEnumerator TripleShotPowerDownRoutine()
-
-    {
-        yield return new WaitForSeconds(10f);
-
-        CanTripleShot = false;
-    }
-
-
-    public void SpeedboostOn()
-    {
-
-        Isspeedboost = true;
-        StartCoroutine(SpeedboostDownRoutine());
-    
-    
-    }
-
-    public IEnumerator SpeedboostDownRoutine()
-
-    {
-        yield return new WaitForSeconds(10f);
-
-        Isspeedboost = false;
-    
-    
-    }
-
-    public void ShieldOn()
-
-    {
-
-        ShieldisActive = true;
-        shieldprefab.SetActive(true);
-       
-       
-
-
-    }
-
-       
-}
+   
+}   
