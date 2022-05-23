@@ -1,0 +1,258 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class Player : MonoBehaviour
+{
+    //public or private identify
+    //data type (int, floats, bool, strings)
+    //every variable has a NAME
+    //option value assigned
+
+    public bool CanTripleShot = false;
+    public bool Isspeedboost = false;
+    public bool ShieldisActive = false;
+    public int lives = 3;
+    private int hitcount = 0;
+    
+
+    [SerializeField]
+    private GameObject PlayerExplosionprefab;
+    [SerializeField]
+    private GameObject tripleshotprefab;
+    [SerializeField]
+    private GameObject laserprefab;
+    [SerializeField]
+    private GameObject shieldprefab;
+    [SerializeField]
+    private GameObject[] motors;
+
+    [SerializeField]
+    private float firerate = 0.25f;
+    private float canfire = 0f;
+
+    [SerializeField]
+    private float speed = 6f;
+
+    private UIManager uimanager;
+    private GameManager gamemanager;
+    private Spawn_Manager spawnmanager;
+    private AudioSource audiosource;
+
+
+    Rigidbody2D rb;
+    Animator animator;
+    Vector2 move;
+
+
+    void Start()
+    {
+        // current position = new position
+        transform.position = new Vector3(0, 0, 0);
+
+        uimanager = GameObject.Find("Canvas").GetComponent<UIManager>();
+                   
+        if (uimanager != null)
+
+        {
+            uimanager.Updatelives(lives);
+        }
+
+        gamemanager = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+
+        spawnmanager = GameObject.Find("SpawnManager").GetComponent<Spawn_Manager>();
+
+        audiosource = GetComponent<AudioSource>();
+
+        hitcount = 0;
+
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
+
+
+    void Update()
+    {
+        
+
+
+    }
+
+    public void damage()
+    {
+
+      
+
+        if (ShieldisActive == true)
+
+        {
+            ShieldisActive = false;
+            shieldprefab.SetActive(false);
+            return;
+        }
+
+        hitcount++;
+
+        if (hitcount == 1)
+
+        {
+            motors[0].SetActive(true);
+        }
+
+        else if (hitcount == 2)
+
+        {
+            motors[1].SetActive(true);
+        }
+
+        //subtrai 1 vida do player (caso fosse para adicionar seria lives++;)
+        lives--;
+
+        uimanager.Updatelives(lives);
+
+        if (lives < 1)
+        {
+            Destroy(this.gameObject);
+            Instantiate(PlayerExplosionprefab, transform.position, Quaternion.identity);
+            gamemanager.gameOver = true;
+            uimanager.ShowMenuScreen();
+            spawnmanager.StopAllCoroutines();
+            
+        }
+
+    }
+       
+
+    public void Shoot()
+    {
+        
+
+        if (Time.time > canfire)
+        {
+            audiosource.Play();
+
+            if (CanTripleShot == true)
+            {
+                Instantiate(tripleshotprefab, transform.position, Quaternion.identity);
+            }
+
+            else if (CanTripleShot == false)
+            {
+
+                Instantiate(laserprefab, transform.position + new Vector3(0, 0.9f, 0), Quaternion.identity);
+            }
+
+
+            canfire = Time.time + firerate;
+
+        }
+
+
+
+    }
+
+
+    private void FixedUpdate()
+    {
+        Vector3 direction = new Vector3(move.x, move.y, 0);
+        rb.MovePosition(rb.position * direction * speed * Time.deltaTime);
+    }
+
+    public void movement(InputAction.CallbackContext value)
+
+    {
+        move = value.ReadValue<Vector2>();
+
+        //movimentação do personagem e limitação de tela
+
+        if (transform.position.y > 4.5f)
+        {
+            transform.position = new Vector3(transform.position.x, 4.5f, 0);
+
+        }
+        else if (transform.position.y < -4.5f)
+        {
+            transform.position = new Vector3(transform.position.x, -4.5f, 0);
+
+        }
+
+        else if (transform.position.y > 4.5f)
+
+        {
+            transform.position = new Vector3(transform.position.x, 4.5f, 0);
+
+        }
+
+        //
+
+        if (transform.position.x > 9.5f)
+        {
+            transform.position = new Vector3(-9.5f, transform.position.y, 0);
+
+        }
+        else if (transform.position.x < -9.5f)
+        {
+            transform.position = new Vector3(9.5f, transform.position.y, 0);
+
+        }
+
+        else if (transform.position.x > 9.5f)
+
+        {
+            transform.position = new Vector3(-9.5f, transform.position.y, 0);
+
+        }
+       
+    }
+
+    public void TripleShotPowerupOn()
+    {
+        CanTripleShot = true;
+        StartCoroutine(TripleShotPowerDownRoutine());
+
+    }
+
+    public IEnumerator TripleShotPowerDownRoutine()
+
+    {
+        yield return new WaitForSeconds(10f);
+
+        CanTripleShot = false;
+    }
+
+
+    public void SpeedboostOn()
+    {
+
+        Isspeedboost = true;
+        StartCoroutine(SpeedboostDownRoutine());
+    
+    
+    }
+
+    public IEnumerator SpeedboostDownRoutine()
+
+    {
+        yield return new WaitForSeconds(10f);
+
+        Isspeedboost = false;
+    
+    
+    }
+
+    public void ShieldOn()
+
+    {
+
+        ShieldisActive = true;
+        shieldprefab.SetActive(true);
+       
+       
+
+
+    }
+
+       
+}
