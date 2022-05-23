@@ -1,0 +1,38 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SharkShop : MonoBehaviour
+{
+
+    private AudioClip _audio;
+    private UI_Manager uimanager;
+
+    private void Start()
+    {
+        uimanager = GameObject.Find("Canvas").GetComponent<UI_Manager>();
+    }
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "Player")
+        {
+            Player player = other.GetComponent<Player>();
+
+            if (Input.GetKeyDown(KeyCode.F) && player._hasCoin == true)
+            {
+                player._hasCoin = false;
+                uimanager.hideCoin();
+                AudioSource.PlayClipAtPoint(_audio, transform.position, 1f);
+                player.buyWeapon();
+
+            }
+
+
+            else if (Input.GetKeyDown(KeyCode.F) && player._hasCoin == false)
+            {
+                Debug.Log("Cade a moeda?");
+               
+            }
+        }
+    }
+}
