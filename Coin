@@ -1,0 +1,37 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Coin : MonoBehaviour
+{
+    [SerializeField]
+    private AudioClip _audio;
+
+    private UI_Manager uimanager;
+
+    private void Start()
+    {
+        uimanager = GameObject.Find("Canvas").GetComponent<UI_Manager>();
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "Player")
+        {
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                Player player = other.GetComponent<Player>();
+
+                if (player != null)
+                {
+                    player._hasCoin = true;
+                    Destroy(this.gameObject);
+                    AudioSource.PlayClipAtPoint(_audio, transform.position, 1f);
+                    uimanager.showCoin();
+                    
+                }
+            }
+        }
+    }
+
+}  
