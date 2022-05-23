@@ -1,0 +1,52 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class UIManager : MonoBehaviour
+{
+    public Sprite[] lives;
+    public Image LivesImageDisplay;
+    public Text scoretext;
+    public GameObject Menuscreen;
+    public GameObject starttext;
+    public GameObject joystick;
+    public GameObject shootbutton;
+    public GameObject play;
+
+
+    public int score;
+
+    public void Updatelives(int currentlives)
+    {
+        LivesImageDisplay.sprite = lives[currentlives];
+    }
+
+    public void Updatescore()
+    {
+        score += 10;
+        
+        scoretext.text = "Score: " + score;
+    }
+
+    public void ShowMenuScreen()
+
+    {
+        Menuscreen.SetActive(true);
+        starttext.SetActive(true);
+        joystick.SetActive(false);
+        shootbutton.SetActive(false);
+        play.SetActive(true);
+    }
+
+    public void HideMenuScreen()
+    {
+        Menuscreen.SetActive(false);
+        starttext.SetActive(false);
+        joystick.SetActive(true);
+        shootbutton.SetActive(true);
+        play.SetActive(false);
+        scoretext.text = "Score: ";
+    }
+
+}
