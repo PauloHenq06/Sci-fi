@@ -1,0 +1,97 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class EnemyAI : MonoBehaviour
+{
+    [SerializeField]
+    private float speed = 3.5f;
+    [SerializeField]
+    private GameObject EnemyExplosionprefab;
+
+    private UIManager uimanager;
+    [SerializeField]
+    private AudioClip clip;
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        uimanager = GameObject.Find("Canvas").GetComponent<UIManager>();
+
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+
+        transform.Translate(Vector3.down * speed * Time.deltaTime);
+
+        if (transform.position.y < -8f)
+
+        {
+            float randomx = Random.Range(7, -7);
+            transform.position = new Vector3(randomx, 8, 0);
+                                           
+        }
+
+        
+
+
+    }
+
+   
+
+
+private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Laser")
+
+        {
+            
+            Destroy(this.gameObject);
+            Destroy(other.gameObject);
+            Instantiate(EnemyExplosionprefab, transform.position, Quaternion.identity);
+            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+        }
+
+        else if (other.tag == "Player")
+
+        {
+            Player player = other.GetComponent<Player>();
+
+
+            if (player != null)
+
+            {
+                player.damage();
+            }
+
+            
+            Destroy(this.gameObject);
+            Instantiate(EnemyExplosionprefab, transform.position, Quaternion.identity);
+            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+
+        }
+
+        else if (other.tag == "Shield")
+
+        {
+            
+            Destroy(this.gameObject);
+            Destroy(other.gameObject);
+            Instantiate(EnemyExplosionprefab, transform.position, Quaternion.identity);
+            AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+        }
+
+
+        uimanager.Updatescore();
+
+            
+
+    }
+
+
+}
