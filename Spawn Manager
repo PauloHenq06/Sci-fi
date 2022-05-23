@@ -1,0 +1,60 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Spawn_Manager : MonoBehaviour
+{
+
+    [SerializeField]
+    private GameObject enemyshipprefab;
+    [SerializeField]
+    private GameObject[] powerups;
+
+    private GameManager gamemanager;
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        gamemanager = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+
+        
+    }
+
+    public void StartSpawnRoutine()
+
+    {
+        StartCoroutine(EnemyspawnRoutine());
+        StartCoroutine(PowerUpsSpawnRoutine());
+
+    }
+
+    
+
+    IEnumerator EnemyspawnRoutine()
+
+    {
+        while (true)
+        {
+            Instantiate(enemyshipprefab, new Vector3(Random.Range(-7f, 7), 7, 0), Quaternion.identity);
+            yield return new WaitForSeconds(2f);
+        }
+
+    }
+
+    IEnumerator PowerUpsSpawnRoutine()
+    {
+        while (true) 
+        {
+            int randomPowerUp = Random.Range(0, 3);
+            Instantiate(powerups[randomPowerUp], new Vector3(Random.Range(-7f, 7), 7, 0), Quaternion.identity);
+            yield return new WaitForSeconds(5f);
+        }
+    }
+
+}
+
+
+
+
