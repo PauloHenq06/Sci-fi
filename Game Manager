@@ -1,0 +1,41 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    public bool gameOver = true;
+    public GameObject player;
+    
+
+    private UIManager uimanager;
+    private Spawn_Manager spawnmanager;
+
+    void Start()
+    {
+        uimanager = GameObject.Find("Canvas").GetComponent<UIManager>();
+
+        spawnmanager = GameObject.Find("SpawnManager").GetComponent<Spawn_Manager>();
+    }
+
+    public void Update()
+    {
+
+
+        
+    }
+
+    public void start()
+
+    {
+        if (gameOver == true)
+
+        {
+            Instantiate(player, Vector3.zero, Quaternion.identity);
+            uimanager.HideMenuScreen();
+            uimanager.score = 0;
+            spawnmanager.StartSpawnRoutine();
+
+        }
+    }
+}
